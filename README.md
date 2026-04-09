@@ -26,10 +26,35 @@ Watches `~/.claude/` data files and displays live activity — tool usage, skill
 
 ## Install
 
+### From source (run directly)
+
 ```bash
-git clone <repo-url> && cd ccmonitor
+git clone https://github.com/tobyilee/ccmonitor.git && cd ccmonitor
 bun install
+bun run start
 ```
+
+### Standalone binary (no Bun required at runtime)
+
+```bash
+git clone https://github.com/tobyilee/ccmonitor.git && cd ccmonitor
+bun install && bun run build
+# Copy to a directory in your PATH:
+cp dist/claude-monitor ~/.bun/bin/ccmonitor
+# Or:
+sudo cp dist/claude-monitor /usr/local/bin/ccmonitor
+```
+
+The `bun build --compile` flag embeds the Bun runtime into a single binary (~54MB), so the target machine does not need Bun installed.
+
+### Global link (for development)
+
+```bash
+cd ccmonitor
+bun link
+```
+
+Creates a global symlink so `claude-monitor` is available from any directory. Changes to source files take effect immediately.
 
 ## Usage
 
