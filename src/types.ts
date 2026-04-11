@@ -117,4 +117,8 @@ export interface SessionState {
   lastUserPrompt: string | null;
   /** Timestamp of the last user prompt */
   lastUserPromptTime: Date | null;
+  /** Current git branch of the project cwd (or short SHA for detached HEAD). Null if not a git repo. */
+  gitBranch: string | null;
+  /** Count of unique files edited in this session (derived from ~/.claude/file-history/<sessionId>/). */
+  editedFilesCount: number;
 }

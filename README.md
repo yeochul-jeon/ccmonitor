@@ -4,21 +4,56 @@ Real-time TUI dashboard for monitoring Claude Code sessions.
 
 Watches `~/.claude/` data files and displays live activity — tool usage, skills, subagents, teams, tasks, token consumption, and file changes.
 
+## Screenshot
+
+The dashboard refreshes every 2 seconds and renders entirely with ANSI escape codes — no external UI framework. Here's what an active session looks like (colors are suggested in brackets; actual output uses ANSI):
+
 ```
- CLAUDE CODE MONITOR                                    17:18:00
- Session:a1b2c3d4 Model:claude-opus-4-6 Age:12m 30s Idle:2s
+ Claude Code Monitor                                                  17:18:00    [cyan bg, bold]
+ /Users/you/workspace/my-project [main]                                            [dim gray + magenta]
+ Session:a1b2c3d4 Model:claude-opus-4-6 Ctx:18% Age:12m 30s Idle:2s
  Msgs:U:5 A:12 Tok:I:45.2K O:8.3K CW:12.1K CR:38.0K
-┌─ Tools ──────────────────────────────────────────────────────┐
-│ Edit:15 Bash:12 Read:8 Grep:5 Agent:3 Skill:2 Write:1       │
-└──────────────────────────────────────────────────────────────┘
-┌─ Subagents ──────────────────────────────────────────────────┐
-│ ● Explore        1m 22s  Find auth middleware files          │
-│ ✔ code-reviewer     42s  Review migration safety             │
-└──────────────────────────────────────────────────────────────┘
-┌─ Skill ──────────────────────────────────────────────────────┐
-│ ● /commit (Fix login bug)  3s                                │
-└──────────────────────────────────────────────────────────────┘
+┌─ Last Prompt  17:17:45 ─────────────────────────────────────────────────────┐
+│ add a feature to show git branch next to the current path, and adjust the   │
+│ title bar color to be more readable                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Tools ─────────────────────────────────────────────────────────────────────┐
+│ Edit:15 Bash:12 Read:8 Grep:5 Agent:3 Skill:2 Write:1                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Subagents ─────────────────────────────────────────────────────────────────┐
+│ ● Explore        1m 22s  Find auth middleware files                         │
+│ ✔ code-reviewer     42s  Review migration safety                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Skill ─────────────────────────────────────────────────────────────────────┐
+│ ● /commit (Fix login bug)  3s                                               │
+│   /oh-my-claudecode:plan at 17:15:02                                        │
+│   /deep-interview at 17:10:44                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Teams ─────────────────────────────────────────────────────────────────────┐
+│ research-team (3)                                                           │
+│   explorer                                                                  │
+│   planner                                                                   │
+│   reviewer                                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Tasks ─────────────────────────────────────────────────────────────────────┐
+│ ✔ Refactor auth middleware                                                  │
+│ ● Write migration tests                                                     │
+│ ○ Update API docs                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ File Activity ─────────────────────────────────────────────────────────────┐
+│ change 17:18:02  ~/.claude/projects/-Users-you-workspace/abc123.jsonl       │
+│ add    17:17:58  ~/.claude/tasks/abc123/task-42.json                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+ q:quit r:refresh | auto 2s
 ```
+
+### Visual highlights
+
+- **Title bar** — cyan background with bold black text; matches the app's primary accent color and stays legible in both light and dark terminal themes.
+- **Path line** — dim gray cwd followed by the current git branch in magenta brackets (e.g. `[main]`), read directly from `.git/HEAD` with zero `git` subprocess overhead.
+- **Last Prompt** — shows the most recent user-typed prompt with the timestamp in the box title, CJK-aware word wrap, and a 500-character hard cap.
+- **Context indicator** — `Ctx:18%` turns yellow at 70% and red at 85% so you notice context exhaustion before it bites.
+- **Subagent status** — `●` (running, yellow), `✔` (completed, green), `✘` (error, red); completed-count summary appears in the box title when there are finished agents.
 
 ## Requirements
 
@@ -211,6 +246,10 @@ The **context window usage percentage** is calculated from the most recent assis
 #### Model
 
 Read from the `message.model` field on assistant transcript entries. Updated on every assistant message, so it reflects the most recently used model.
+
+#### Git Branch
+
+Parsed directly from `<cwd>/.git/HEAD` every refresh cycle. Handles both normal refs (`ref: refs/heads/<branch>`) and detached HEAD (raw SHA, shown as a 7-character short form). Returns `null` for non-git directories. This bypasses `git` subprocess spawning entirely — at a 2-second refresh interval, the fork overhead of `git branch --show-current` would be measurable, whereas reading a ~40-byte file is effectively free.
 
 #### File Activity
 

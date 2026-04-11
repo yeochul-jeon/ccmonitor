@@ -75,6 +75,8 @@ export function parseTranscript(
     model: 'unknown',
     lastUserPrompt: null,
     lastUserPromptTime: null,
+    gitBranch: null,
+    editedFilesCount: 0,
   };
 
   if (!existsSync(transcriptFile)) return state;
@@ -106,8 +108,67 @@ export function parseTranscript(
   loadTasks(state);
   // Check PostToolUse hook state file for faster skill completion detection
   loadSkillHookState(state);
+  // Read git branch from the project cwd (derived from Claude's projectDir convention)
+  state.gitBranch = readGitBranch(projectDirToRealCwd(projectDir));
+  // Count unique files edited in this session (from file-history backups)
+  loadEditedFilesCount(state);
 
   return state;
+}
+
+/**
+ * Count unique files edited in this session by reading ~/.claude/file-history/<sessionId>/.
+ * Each edit creates a file like "<hash>@v<N>" — multiple versions of the same file share
+ * the hash prefix, so deduplicating by hash gives the actual unique file count.
+ */
+function loadEditedFilesCount(state: SessionState): void {
+  const dir = join(CLAUDE_DIR, 'file-history', state.sessionId);
+  if (!existsSync(dir)) {
+    state.editedFilesCount = 0;
+    return;
+  }
+  try {
+    const entries = readdirSync(dir);
+    // Strip the "@vN" version suffix to deduplicate multiple edits of the same file
+    const unique = new Set(entries.map((e: string) => e.replace(/@v\d+$/, '')));
+    state.editedFilesCount = unique.size;
+  } catch {
+    state.editedFilesCount = 0;
+  }
+}
+
+/**
+ * Convert Claude's projectDir (e.g. ~/.claude/projects/-Users-foo-bar) back to
+ * the real filesystem cwd (e.g. /Users/foo/bar). This is the inverse of
+ * cwdToProjectDirName.
+ */
+function projectDirToRealCwd(projectDir: string): string {
+  return basename(projectDir).replace(/-/g, '/');
+}
+
+/**
+ * Read the current git branch for a given cwd by parsing .git/HEAD directly.
+ * Returns the branch name, short SHA for detached HEAD, or null if not a git repo.
+ *
+ * Parsing .git/HEAD is preferred over shelling out to `git` because:
+ *   - Zero fork overhead on every 2s refresh
+ *   - No dependency on `git` being on PATH
+ *   - Handles detached HEAD uniformly
+ */
+function readGitBranch(cwdPath: string): string | null {
+  try {
+    const headFile = join(cwdPath, '.git', 'HEAD');
+    if (!existsSync(headFile)) return null;
+    const content = readFileSync(headFile, 'utf-8').trim();
+    // Normal case: "ref: refs/heads/<branch>"
+    const refMatch = content.match(/^ref:\s*refs\/heads\/(.+)$/);
+    if (refMatch) return refMatch[1];
+    // Detached HEAD: raw SHA — show short form
+    if (/^[0-9a-f]{7,40}$/i.test(content)) return content.slice(0, 7);
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**

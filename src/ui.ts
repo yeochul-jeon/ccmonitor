@@ -194,16 +194,20 @@ export function render(state: SessionState | null, fileEvents: Array<{ path: str
   const lines: string[] = [];
   const now = new Date();
 
-  // Header bar
+  // Header bar — high-contrast cyan background with bold black text matches
+  // the app's dominant accent color and stays legible in both light/dark themes.
   const headerText = ` Claude Code Monitor `;
   const timeText = ` ${formatTime(now)} `;
   const headerPad = W - headerText.length - timeText.length;
   lines.push(
-    `${BG.gray}${FG.white}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
+    `${BG.cyan}${FG.black}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
   );
-  // Current working directory
+  // Current working directory + git branch (if available)
   const cwdPath = state ? state.projectDir.replace(/.*projects\//, '').replace(/-/g, '/') : process.cwd();
-  lines.push(`${DIM} ${cwdPath}${RESET}`);
+  const branchSuffix = state?.gitBranch
+    ? ` ${FG.magenta}[${state.gitBranch}]${RESET}`
+    : '';
+  lines.push(`${DIM} ${cwdPath}${RESET}${branchSuffix}`);
 
   if (!state) {
     lines.push('');
@@ -233,7 +237,8 @@ export function render(state: SessionState | null, fileEvents: Array<{ path: str
     `${FG.cyan}I:${formatTokens(input)}${RESET} ` +
     `${FG.magenta}O:${formatTokens(output)}${RESET} ` +
     `${FG.yellow}CW:${formatTokens(cacheWrite)}${RESET} ` +
-    `${FG.green}CR:${formatTokens(cacheRead)}${RESET}`,
+    `${FG.green}CR:${formatTokens(cacheRead)}${RESET}` +
+    `${DIM} Files:${RESET}${FG.yellow}${state.editedFilesCount}${RESET}`,
   );
 
   // --- Last User Prompt ---
