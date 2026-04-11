@@ -77,6 +77,7 @@ export function parseTranscript(
     lastUserPromptTime: null,
     gitBranch: null,
     editedFilesCount: 0,
+    activeSessions: 0,
   };
 
   if (!existsSync(transcriptFile)) return state;
@@ -112,6 +113,8 @@ export function parseTranscript(
   state.gitBranch = readGitBranch(projectDirToRealCwd(projectDir));
   // Count unique files edited in this session (from file-history backups)
   loadEditedFilesCount(state);
+  // Count live Claude Code sessions across all terminals/projects
+  loadActiveSessions(state);
 
   return state;
 }
@@ -134,6 +137,51 @@ function loadEditedFilesCount(state: SessionState): void {
     state.editedFilesCount = unique.size;
   } catch {
     state.editedFilesCount = 0;
+  }
+}
+
+/**
+ * Check if a process is currently alive by sending signal 0 (no-op).
+ * Returns false on ESRCH (no such process) or any other error.
+ */
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Count currently-alive Claude Code processes across all terminals.
+ *
+ * Reads each ~/.claude/sessions/<pid>.json registry entry, parses the
+ * embedded `pid` field, and verifies liveness with signal 0. Stale entries
+ * (from crashed processes) are ignored.
+ */
+function loadActiveSessions(state: SessionState): void {
+  const sessionsDir = join(CLAUDE_DIR, 'sessions');
+  if (!existsSync(sessionsDir)) {
+    state.activeSessions = 0;
+    return;
+  }
+  try {
+    const files = readdirSync(sessionsDir).filter((f: string) => f.endsWith('.json'));
+    let alive = 0;
+    for (const f of files) {
+      try {
+        const data = JSON.parse(readFileSync(join(sessionsDir, f), 'utf-8'));
+        if (typeof data.pid === 'number' && isProcessAlive(data.pid)) {
+          alive++;
+        }
+      } catch {
+        // Skip malformed or unreadable entries
+      }
+    }
+    state.activeSessions = alive;
+  } catch {
+    state.activeSessions = 0;
   }
 }
 

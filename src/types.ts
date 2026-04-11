@@ -121,4 +121,6 @@ export interface SessionState {
   gitBranch: string | null;
   /** Count of unique files edited in this session (derived from ~/.claude/file-history/<sessionId>/). */
   editedFilesCount: number;
+  /** Number of currently-alive Claude Code processes (from ~/.claude/sessions/<pid>.json with PID liveness check). */
+  activeSessions: number;
 }

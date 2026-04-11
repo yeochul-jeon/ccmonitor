@@ -228,7 +228,8 @@ export function render(state: SessionState | null, fileEvents: Array<{ path: str
     `${DIM} Model:${RESET}${FG.green}${state.model}${RESET}` +
     `${DIM} Ctx:${RESET}${ctxColor}${ctxPct}%${RESET}` +
     `${DIM} Age:${RESET}${sessionAge}` +
-    `${DIM} Idle:${RESET}${sinceActivity}`,
+    `${DIM} Idle:${RESET}${sinceActivity}` +
+    `${DIM} Sess:${RESET}${FG.cyan}${state.activeSessions}${RESET}`,
   );
   const { input, output, cacheWrite, cacheRead } = state.tokenUsage;
   lines.push(
