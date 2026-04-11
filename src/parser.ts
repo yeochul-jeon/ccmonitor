@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join, basename } from 'path';
 import { homedir } from 'os';
-import type { SessionState, TeamInfo, TranscriptEntry } from './types.js';
+import type { SessionState, TeamInfo, TranscriptEntry, MemoryInfo } from './types.js';
 
 const CLAUDE_DIR = join(homedir(), '.claude');
 
@@ -78,6 +78,7 @@ export function parseTranscript(
     gitBranch: null,
     editedFilesCount: 0,
     activeSessions: 0,
+    memory: null,
   };
 
   if (!existsSync(transcriptFile)) return state;
@@ -115,6 +116,8 @@ export function parseTranscript(
   loadEditedFilesCount(state);
   // Count live Claude Code sessions across all terminals/projects
   loadActiveSessions(state);
+  // Read auto-memory state for this project
+  loadMemoryInfo(state);
 
   return state;
 }
@@ -160,6 +163,64 @@ function isProcessAlive(pid: number): boolean {
  * embedded `pid` field, and verifies liveness with signal 0. Stale entries
  * (from crashed processes) are ignored.
  */
+/**
+ * Read auto-memory state for this project from projects/<cwd>/memory/.
+ *
+ * The auto-memory system stores:
+ *   - MEMORY.md — index file (topic pointers)
+ *   - <category>_<name>.md — individual topic files, organized by category prefix
+ *     (e.g. feedback_naming.md, project_structure.md, user_preferences.md)
+ *
+ * Subdirectories (team/, logs/) are skipped — we only count flat topic files.
+ */
+function loadMemoryInfo(state: SessionState): void {
+  const memDir = join(state.projectDir, 'memory');
+  if (!existsSync(memDir)) {
+    state.memory = null;
+    return;
+  }
+  try {
+    const indexPath = join(memDir, 'MEMORY.md');
+    const hasIndex = existsSync(indexPath);
+    const indexLines = hasIndex
+      ? readFileSync(indexPath, 'utf-8').split('\n').length
+      : 0;
+
+    const entries = readdirSync(memDir, { withFileTypes: true });
+    // Collect topic files: .md files at the top level, excluding MEMORY.md and its backup
+    const topics = entries
+      .filter((e: { isFile: () => boolean; name: string }) =>
+        e.isFile() && e.name.endsWith('.md') && !e.name.startsWith('MEMORY'))
+      .map((e: { name: string }) => {
+        const fullPath = join(memDir, e.name);
+        return { name: e.name, mtime: statSync(fullPath).mtime };
+      });
+    topics.sort((a: { mtime: Date }, b: { mtime: Date }) => b.mtime.getTime() - a.mtime.getTime());
+
+    // Group by category prefix (the token before the first underscore)
+    const categoryBreakdown: Record<string, number> = {};
+    for (const t of topics) {
+      const match = t.name.match(/^([a-z]+)_/);
+      const cat = match ? match[1] : 'other';
+      categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + 1;
+    }
+
+    const lastModified = topics[0]?.mtime
+      ?? (hasIndex ? statSync(indexPath).mtime : null);
+
+    const info: MemoryInfo = {
+      hasIndex,
+      indexLines,
+      topicCount: topics.length,
+      categoryBreakdown,
+      lastModified,
+    };
+    state.memory = info;
+  } catch {
+    state.memory = null;
+  }
+}
+
 function loadActiveSessions(state: SessionState): void {
   const sessionsDir = join(CLAUDE_DIR, 'sessions');
   if (!existsSync(sessionsDir)) {

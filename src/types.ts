@@ -81,6 +81,19 @@ export interface SkillInfo {
   lastUsed: Date;
 }
 
+export interface MemoryInfo {
+  /** Whether MEMORY.md (the index file) exists. */
+  hasIndex: boolean;
+  /** Line count of MEMORY.md, or 0 if absent. */
+  indexLines: number;
+  /** Number of topic files (*.md files other than MEMORY.md/MEMORY.md.bak). */
+  topicCount: number;
+  /** Count of topic files grouped by prefix (e.g. { feedback: 4, project: 3, user: 1 }). */
+  categoryBreakdown: Record<string, number>;
+  /** Most recent modification across all memory files, or null if none. */
+  lastModified: Date | null;
+}
+
 export interface ActiveSkill {
   name: string;
   args?: string;
@@ -123,4 +136,6 @@ export interface SessionState {
   editedFilesCount: number;
   /** Number of currently-alive Claude Code processes (from ~/.claude/sessions/<pid>.json with PID liveness check). */
   activeSessions: number;
+  /** Auto-memory info for this project (from projects/<cwd>/memory/). Null if no memory directory exists. */
+  memory: MemoryInfo | null;
 }

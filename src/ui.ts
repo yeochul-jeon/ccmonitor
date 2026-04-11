@@ -386,6 +386,35 @@ export function render(state: SessionState | null, fileEvents: Array<{ path: str
   }
   lines.push(boxBottom(W, FG.yellow));
 
+  // --- Memory ---
+  lines.push(boxTop('Memory', W, FG.blue));
+  if (!state.memory) {
+    lines.push(boxLine(`${DIM}(no memory yet)${RESET}`, W, FG.blue));
+  } else {
+    const m = state.memory;
+    // Line 1: index status + topic count + last-modified ago
+    const indexPart = m.hasIndex
+      ? `${FG.cyan}MEMORY.md${RESET}${DIM} (${m.indexLines} lines)${RESET}`
+      : `${DIM}(no index)${RESET}`;
+    const topicPart = m.topicCount > 0
+      ? ` ${DIM}+${RESET} ${FG.yellow}${m.topicCount} topic${m.topicCount === 1 ? '' : 's'}${RESET}`
+      : '';
+    const ageSuffix = m.lastModified
+      ? ` ${DIM}last: ${formatDuration(now.getTime() - m.lastModified.getTime())} ago${RESET}`
+      : '';
+    lines.push(boxLine(`${indexPart}${topicPart}${ageSuffix}`, W, FG.blue));
+
+    // Line 2 (optional): category breakdown, if there are topics
+    if (m.topicCount > 0) {
+      const cats = Object.entries(m.categoryBreakdown)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, n]) => `${FG.magenta}${cat}${RESET}${DIM}:${n}${RESET}`)
+        .join(' ');
+      lines.push(boxLine(`${DIM}  categories:${RESET} ${cats}`, W, FG.blue));
+    }
+  }
+  lines.push(boxBottom(W, FG.blue));
+
   // --- File Activity ---
   lines.push(boxTop('File Activity', W, FG.gray));
   const recentEvents = fileEvents.slice(-8);
