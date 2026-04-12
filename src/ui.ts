@@ -18,7 +18,9 @@ const FG = {
 };
 const BG = {
   black: `${CSI}40m`, blue: `${CSI}44m`, cyan: `${CSI}46m`,
-  gray: `${CSI}100m`,
+  yellow: `${CSI}43m`, gray: `${CSI}100m`,
+  // Bright variants (ANSI 90-107 range): more vivid than standard
+  brightBlue: `${CSI}104m`,
 };
 
 function pad(s: string, len: number): string {
@@ -198,13 +200,14 @@ export function render(
   const lines: string[] = [];
   const now = new Date();
 
-  // Header bar — high-contrast cyan background with bold black text matches
-  // the app's dominant accent color and stays legible in both light/dark themes.
+  // Header bar — bright blue background with bold white text. Bright blue
+  // (ANSI 104) is more vivid than standard blue (44) and reads well in
+  // both light and dark terminal themes without tinting toward cyan.
   const headerText = ` Claude Code Monitor `;
   const timeText = ` ${formatTime(now)} `;
   const headerPad = W - headerText.length - timeText.length;
   lines.push(
-    `${BG.cyan}${FG.black}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
+    `${BG.brightBlue}${FG.white}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
   );
   // Current working directory + git branch (if available)
   const cwdPath = state ? state.projectDir.replace(/.*projects\//, '').replace(/-/g, '/') : process.cwd();
@@ -459,8 +462,10 @@ export function render(
   const nextHint = canSwitch
     ? ` ${BOLD}n${RESET}${DIM}:next session${RESET}`
     : '';
+  // High-contrast yellow-on-black badge — eye-catching regardless of
+  // terminal theme and clearly distinct from the blue title bar above.
   const switchedBadge = isSwitchedView
-    ? ` ${BG.blue}${FG.white}${BOLD} VIEWING ${RESET}${FG.yellow} press ${BOLD}r${RESET}${FG.yellow} to return${RESET}`
+    ? ` ${BG.yellow}${FG.black}${BOLD} VIEWING ${RESET}${FG.yellow}${BOLD} press r to return${RESET}`
     : '';
   lines.push(
     `${DIM} ${BOLD}q${RESET}${DIM}:quit ${BOLD}r${RESET}${DIM}:refresh${RESET}${nextHint}${DIM} | auto 2s${RESET}${switchedBadge}`,

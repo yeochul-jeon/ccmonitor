@@ -9,7 +9,7 @@ Watches `~/.claude/` data files and displays live activity — tool usage, skill
 The dashboard refreshes every 2 seconds and renders entirely with ANSI escape codes — no external UI framework. Here's what an active session looks like (colors are suggested in brackets; actual output uses ANSI):
 
 ```
- Claude Code Monitor                                                  17:18:00    [cyan bg, bold]
+ Claude Code Monitor                                                  17:18:00    [bright blue bg, white bold]
  /Users/you/workspace/my-project [main]                                            [dim gray + magenta]
  Session:a1b2c3d4 Model:claude-opus-4-6 Ctx:18% Age:12m 30s Idle:2s
  Sess:3 (+api, docs)
@@ -55,7 +55,7 @@ The dashboard refreshes every 2 seconds and renders entirely with ANSI escape co
 
 ### Visual highlights
 
-- **Title bar** — cyan background with bold black text; matches the app's primary accent color and stays legible in both light and dark terminal themes.
+- **Title bar** — bright blue background with bold white text; vivid and crisp in both light and dark terminal themes.
 - **Path line** — dim gray cwd followed by the current git branch in magenta brackets (e.g. `[main]`), read directly from `.git/HEAD` with zero `git` subprocess overhead.
 - **Session counter** — `Sess:N` shows how many Claude Code processes are alive across all terminals; the `(+project, project)` hint lists up to two other active project basenames so you know what else is running.
 - **Files counter** — `Files:N` shows the number of unique files edited in this session (derived from `file-history/<sessionId>/` and deduplicated by version).
@@ -63,7 +63,7 @@ The dashboard refreshes every 2 seconds and renders entirely with ANSI escape co
 - **Memory panel** — summarizes the auto-memory system for this project: MEMORY.md size, topic count, category breakdown by filename prefix, and the 3 most recently modified topics.
 - **Context indicator** — `Ctx:18%` turns yellow at 70% and red at 85% so you notice context exhaustion before it bites.
 - **Subagent status** — `●` (running, yellow), `✔` (completed, green), `✘` (error, red); completed-count summary appears in the box title when there are finished agents.
-- **Session switcher** — press `n` to cycle through other live Claude Code sessions across all projects. A `VIEWING` badge in the footer reminds you that you're watching a switched session; press `r` to return to the default view for your current cwd.
+- **Session switcher** — press `n` to cycle through other live Claude Code sessions across all projects. A high-contrast yellow `VIEWING` badge in the footer reminds you that you're watching a switched session; press `r` to return to the default view for your current cwd.
 
 ## Requirements
 
