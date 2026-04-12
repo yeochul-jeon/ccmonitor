@@ -9,7 +9,7 @@ Watches `~/.claude/` data files and displays live activity — tool usage, skill
 The dashboard refreshes every 2 seconds and renders entirely with ANSI escape codes — no external UI framework. Here's what an active session looks like (colors are suggested in brackets; actual output uses ANSI):
 
 ```
- Claude Code Monitor                                                  17:18:00    [bright blue bg, white bold]
+ Claude Code Monitor                                                  17:18:00    [#1e3a8a bg, #ffffff bold]
  /Users/you/workspace/my-project [main]                                            [dim gray + magenta]
  Session:a1b2c3d4 Model:claude-opus-4-6 Ctx:18% Age:12m 30s Idle:2s
  Sess:3 (+api, docs)
@@ -55,7 +55,7 @@ The dashboard refreshes every 2 seconds and renders entirely with ANSI escape co
 
 ### Visual highlights
 
-- **Title bar** — bright blue background with bold white text; vivid and crisp in both light and dark terminal themes.
+- **Title bar** — deep blue (`#1e3a8a`) background with bold pure-white (`#ffffff`) text. Uses 24-bit truecolor for deterministic rendering across terminal themes.
 - **Path line** — dim gray cwd followed by the current git branch in magenta brackets (e.g. `[main]`), read directly from `.git/HEAD` with zero `git` subprocess overhead.
 - **Session counter** — `Sess:N` shows how many Claude Code processes are alive across all terminals; the `(+project, project)` hint lists up to two other active project basenames so you know what else is running.
 - **Files counter** — `Files:N` shows the number of unique files edited in this session (derived from `file-history/<sessionId>/` and deduplicated by version).

@@ -21,7 +21,14 @@ const BG = {
   yellow: `${CSI}43m`, gray: `${CSI}100m`,
   // Bright variants (ANSI 90-107 range): more vivid than standard
   brightBlue: `${CSI}104m`,
+  // Truecolor (24-bit) — deterministic RGB regardless of terminal theme.
+  // Title bar uses Tailwind blue-900 (#1e3a8a), a deep saturated navy.
+  deepBlue: `${CSI}48;2;30;58;138m`,
 };
+
+// Truecolor foreground entries for when ANSI palette colors aren't precise enough.
+// Used sparingly — most text still uses the FG table above.
+const FG_PURE_WHITE = `${CSI}38;2;255;255;255m`; // #ffffff
 
 function pad(s: string, len: number): string {
   const dw = displayWidth(s);
@@ -200,14 +207,15 @@ export function render(
   const lines: string[] = [];
   const now = new Date();
 
-  // Header bar — bright blue background with bold white text. Bright blue
-  // (ANSI 104) is more vivid than standard blue (44) and reads well in
-  // both light and dark terminal themes without tinting toward cyan.
+  // Header bar — deep blue (#1e3a8a) background with pure white (#ffffff)
+  // bold text. Using 24-bit truecolor gives deterministic rendering across
+  // terminal themes (modern terminals support this). The deep saturated
+  // navy is more "substantial" than the previous bright blue.
   const headerText = ` Claude Code Monitor `;
   const timeText = ` ${formatTime(now)} `;
   const headerPad = W - headerText.length - timeText.length;
   lines.push(
-    `${BG.brightBlue}${FG.white}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
+    `${BG.deepBlue}${FG_PURE_WHITE}${BOLD}${headerText}${' '.repeat(Math.max(0, headerPad))}${timeText}${RESET}`,
   );
   // Current working directory + git branch (if available)
   const cwdPath = state ? state.projectDir.replace(/.*projects\//, '').replace(/-/g, '/') : process.cwd();
