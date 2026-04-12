@@ -57,7 +57,7 @@ The dashboard refreshes every 2 seconds and renders entirely with ANSI escape co
 
 - **Title bar** — deep blue (`#1e3a8a`) background with bold pure-white (`#ffffff`) text. Uses 24-bit truecolor for deterministic rendering across terminal themes.
 - **Path line** — dim gray cwd followed by the current git branch in magenta brackets (e.g. `[main]`), read directly from `.git/HEAD` with zero `git` subprocess overhead.
-- **Session counter** — `Sess:N` shows how many Claude Code processes are alive across all terminals; the `(+project, project)` hint lists up to two other active project basenames so you know what else is running.
+- **Session counter** — `Sess:N` (on its own line) shows how many Claude Code processes are alive across all terminals, plus the basenames of up to four other active projects (e.g. `Sess:5 (+ultrastudy, api, docs, tests)`). Additional projects beyond the first four are shown as a `+N` overflow count.
 - **Files counter** — `Files:N` shows the number of unique files edited in this session (derived from `file-history/<sessionId>/` and deduplicated by version).
 - **Last Prompt** — shows the most recent user-typed prompt with the timestamp in the box title, CJK-aware word wrap, and a 500-character hard cap.
 - **Memory panel** — summarizes the auto-memory system for this project: MEMORY.md size, topic count, category breakdown by filename prefix, and the 3 most recently modified topics.
