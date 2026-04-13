@@ -1,5 +1,7 @@
 # ccmonitor
 
+**Version: 1.0.0**
+
 Real-time TUI dashboard for monitoring Claude Code sessions.
 
 Watches `~/.claude/` data files and displays live activity — tool usage, skills, subagents, teams, tasks, token consumption, and file changes.

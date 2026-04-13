@@ -1,4 +1,5 @@
 import type { SessionState } from './types.js';
+import pkg from '../package.json';
 
 // ANSI escape helpers
 const ESC = '\x1b';
@@ -211,7 +212,7 @@ export function render(
   // bold text. Using 24-bit truecolor gives deterministic rendering across
   // terminal themes (modern terminals support this). The deep saturated
   // navy is more "substantial" than the previous bright blue.
-  const headerText = ` Claude Code Monitor `;
+  const headerText = ` Claude Code Monitor v${pkg.version} `;
   const timeText = ` ${formatTime(now)} `;
   const headerPad = W - headerText.length - timeText.length;
   lines.push(
