@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-17
+
+### Fixed
+- **Context % over 100% (sometimes 200%+) for Opus 4.7 sessions.** `getContextLimit` was hard-coded to recognize only Opus 4.5 / 4.6 as 1M-context models, so Opus 4.7 silently fell through to the generic `opus` branch (200K) and produced inflated percentages on long sessions (e.g. an 800K-token context displayed as 400%). The lookup now uses a regex that absorbs every Opus 4.x where x ≥ 5 — including future 4.8, 4.9, 4.10+ — and also recognizes the explicit `[1m]` runtime variant marker.
+
 ## [1.1.0] - 2026-04-17
 
 ### Added

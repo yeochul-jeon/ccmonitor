@@ -188,8 +188,13 @@ function formatTime(d: Date): string {
 /** Get context window limit for a given model string */
 function getContextLimit(model: string): number {
   const m = model.toLowerCase();
-  // Opus 4.6+ defaults to 1M context
-  if (m.includes('opus-4-6') || m.includes('opus-4-5')) return 1_000_000;
+  // Explicit 1M-variant marker, e.g. `claude-opus-4-7[1m]` — present at runtime
+  // even when the persisted JSONL strips it.
+  if (m.includes('[1m]')) return 1_000_000;
+  // Opus 4.5+ defaults to 1M context. Regex absorbs all future Opus 4.x
+  // versions (4-5, 4-6, 4-7, ..., 4-10, 4-11, ...) so each new release
+  // doesn't silently regress the percentage display.
+  if (/opus-4-(?:[5-9]|\d{2,})/.test(m)) return 1_000_000;
   if (m.includes('opus')) return 200_000;
   if (m.includes('sonnet')) return 200_000;
   if (m.includes('haiku')) return 200_000;
