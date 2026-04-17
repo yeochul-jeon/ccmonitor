@@ -12,9 +12,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 bun run start          # Run the monitor (bun run src/index.ts)
 bun run dev            # Run with --watch for auto-reload
 bun run build          # Compile to standalone binary: dist/ccmonitor
+bun run install:global # Build + copy binary to ~/.bun/bin/ccmonitor
 ```
 
 Run with a specific session: `bun run src/index.ts <sessionId>`
+
+## Testing
+
+No test suite exists yet (`bun test` is not wired up). Verification is manual:
+1. `bun run build` must succeed.
+2. `bun run start` must render visually-identical TUI output to the prior version.
+3. A `bun test` setup is planned — see `tasks/prd-quality-uplift.md` US-002 / US-005.
+
+## Upgrade
+
+When the user says `upgrade`:
+- Bump the minor version in `package.json`
+- Verify with `bun run build` (rebuild `dist/ccmonitor`)
+- Add an entry to `CHANGELOG.md` (Keep a Changelog format)
+- Update `README.md` (version line + any user-facing changes)
+- Save, commit, push
 
 ## Architecture
 
@@ -28,6 +45,7 @@ Four source files in `src/`, no external UI framework — raw ANSI escape codes 
 ### Key Design Decisions
 
 - **CWD-scoped by default**: Without a sessionId argument, the monitor finds the latest session matching `process.cwd()` by converting the path to Claude's directory naming convention (`/Users/foo/bar` → `-Users-foo-bar`).
+  - **Known footgun:** `cwdToProjectDirName` maps `_` → `-` (fixed in PR #1), but the inverse `projectDirToRealCwd` only maps `-` → `/`. A cwd containing `_` (e.g. `/Users/foo_bar/baz`) round-trips lossy. Tracked in `quality-20260417.md` Issue #4 and `tasks/prd-quality-uplift.md` NG-6.
 - **Subagent status heuristic**: A subagent is considered "completed" if its `.jsonl` file hasn't been modified in 30 seconds.
 - **Skill completion detection**: Two mechanisms — (1) transcript parsing detects `stop_reason === 'end_turn'` on assistant messages, (2) a PostToolUse hook (`scripts/on-skill-complete.sh`) writes to `~/.claude/.omc/state/last-skill-complete.json` for faster detection.
 - **No imports from Claude Code codebase** — fully decoupled. Reads only the file artifacts Claude Code produces.
